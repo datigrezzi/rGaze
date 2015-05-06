@@ -1,0 +1,6 @@
+source('http://bioconductor.org/biocLite.R')
+biocLite('rhdf5')
+h5ls('events.hdf5')
+library(rhdf5)
+rhdf5
+h5ls
