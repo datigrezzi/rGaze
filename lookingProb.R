@@ -1,0 +1,2 @@
+# script to ask for picture of stimulus (adjust dimensions?) and plot given x,y coordinates over the picture
+# either as heatmap (with colormap option) or as trail with variable diameter (taking into account fixation length)
