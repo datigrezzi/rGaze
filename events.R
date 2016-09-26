@@ -8,12 +8,11 @@
 # based on number of items in fileList and i
 ###########################################
 events<-function(fileList,dataDir,exportDir,variables=c('Timestamp','Event','Descriptor'),segmented=T,segment.keyword="",video.ends.by.press=F,saveFile=T,...){
-	setwd(dataDir)
 	# i<-2 ## for debugging
 	for (i in 1:length(fileList)){ ## quote here for debugging
 # print(paste(i,'check',sep='_'))
 		# reading individual combined data file
-		tempFile<-read.table(fileList[i], header = T, sep = "\t", dec = ",",fill = T, na.strings="NA",blank.lines.skip = FALSE, ...)[,variables]
+		tempFile<-read.table(paste(dataDir,fileList[i],sep="/"), header = T, sep = "\t", dec = ",",fill = T, na.strings="NA",blank.lines.skip = FALSE, ...)[,variables]
 		# getting event info
 		eventNames<-as.character(tempFile[(grepl('start',tempFile[,2],ignore.case=T)|grepl('show',tempFile[,2],ignore.case=T)),3])
 		eventStart<-tempFile[(grepl('start',tempFile[,2],ignore.case=T)|grepl('show',tempFile[,2],ignore.case=T)),1]
