@@ -3,20 +3,20 @@
 # Iyad Aldaqre
 # 19.11.2015
 # updated 11.7.2016
-# Updated 26.9.2016
+# Updated 8.10.2016
 ###########################################
 # to add:
 # percentage progress bar
 # based on number of items in fileList and i
 ###########################################
-events<-function(fileList,dataDir,exportDir,variables=c('Timestamp','Event','Descriptor'),segmented=T,segment.keyword="",skip.keyword="",skip.ignore.case=T,video.ends.by.press=F,saveFile=T,...){
+events<-function(fileList,dataDir,exportDir,variables=c('Timestamp','Event','Descriptor'),segmented=T,segment.keyword="",skip.keyword="",skip.ignore.case=T,video.ends.by.press=F,saveFile=T,dec = ".",...){
 	curDir<-getwd()
-	setwd(dataDir)
+	# setwd(dataDir)
 	# i<-2 ## for debugging
 	for (i in 1:length(fileList)){ ## quote here for debugging
 # print(paste(i,'check',sep='_'))
 		# reading individual combined data file
-		tempFile<-read.table(paste(dataDir,fileList[i],sep=.Platform$file.sep), header = T, sep = "\t", dec = ",",fill = T, na.strings="NA",blank.lines.skip = FALSE, ...)[,variables]
+		tempFile<-read.table(paste(dataDir,fileList[i],sep=.Platform$file.sep), header = T, sep = "\t",fill = T, na.strings="NA",blank.lines.skip = FALSE, ...)[,variables]
 		# getting event info
 		eventNames<-as.character(tempFile[(grepl('start',tempFile[,2],ignore.case=T)|grepl('show',tempFile[,2],ignore.case=T)),3])
 		eventStart<-tempFile[(grepl('start',tempFile[,2],ignore.case=T)|grepl('show',tempFile[,2],ignore.case=T)),1]
@@ -51,7 +51,7 @@ events<-function(fileList,dataDir,exportDir,variables=c('Timestamp','Event','Des
 	# shall a copy be saved in export folder?
 	if(saveFile){
 		setwd(exportDir)
-		write.table(allEvents, 'eventsfile.txt', quote=FALSE, sep="\t",na="NA",row.names=FALSE,col.names=TRUE)
+		write.table(allEvents, paste(exportDir,'eventsfile.txt',sep=.Platform$file.sep), quote=FALSE, sep="\t",na="NA",row.names=FALSE,col.names=TRUE)
 	}
 
 	setwd(curDir) #change to full path without setwd
