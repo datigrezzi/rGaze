@@ -1,6 +1,10 @@
 # function to plot error bars in barplots
 # from monkeysuncle.stanford.edu/?p=485
 
+maxN<-function(x,n){
+	return(sort(x)[(length(x)-n):length(x)])
+}
+
 colorvec<-c('antiquewhite','cornflowerblue','darkolivegreen2','brown1')
 
 error.bar <- function(x, y, upper, lower = upper, length = 0.1, ...) {
