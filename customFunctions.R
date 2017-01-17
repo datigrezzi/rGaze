@@ -1,12 +1,19 @@
-# function to plot error bars in barplots
+# A set of useful custom functions
+# Iyad Aldaqre
+# 17.01.2017
+
+# A function to shift a vector by n
+shift<-function (x, shift){
+	c(rep(NA, times=shift), x[1:(length(x)-shift)]) # takes only positive values!
+}
+
+# A function to get the maximum n values (instead of just the single maximum value)
+maxN<-function(x,n){
+	return(sort(x)[(length(x)-n):length(x)])
+}
+
+# A function to plot error bars in barplots
 # from monkeysuncle.stanford.edu/?p=485
-
-shift<-function (x, shift) c(rep(NA, times=shift), x[1:(length(x)-shift)]) # takes only positive values!
-
-maxN<-function(x,n) return(sort(x)[(length(x)-n):length(x)])
-
-colorvec<-c('antiquewhite','cornflowerblue','darkolivegreen2','brown1')
-
 error.bar <- function(x, y, upper, lower = upper, length = 0.1, ...) {
 	if (length(x) != length(y) | length(y) != length(lower) | length(lower) != length(upper)){
 		stop("Vectors must be of the same length")
@@ -15,13 +22,13 @@ error.bar <- function(x, y, upper, lower = upper, length = 0.1, ...) {
 			}
 }
 
-# function to calculate the standard error of the mean
+# A function to calculate the standard error of the mean
 sem <- function(x, na.rm = TRUE) {
 	if (na.rm) {stdError <- sd(x, na.rm = T)/sqrt(length(x))} else {stdError <- sd(x)/sqrt(length(x))}
 	return(stdError)
 }
 
-# function to plot line and shaded error area around the line
+# A function to plot line and shaded error area around the line
 error.line<-function(x,y,error,type='l',lineCol='black',ylim=c(min(y),max(y)),ylab='',xlab='',errorCol=lineCol,errorAlpha=40,predict=T,add=F,...){
 	if(length(error)==1){
 		warning('Length of error was expanded to match length of x')
@@ -44,22 +51,23 @@ error.line<-function(x,y,error,type='l',lineCol='black',ylim=c(min(y),max(y)),yl
 	polygon(c(lineData$x,rev(lineData$x)), c(lineData$y+errorData$y, rev(lineData$y-errorData$y)),col = colVal, border = NA)
 }
 
-# function to calculate cohen's d effect size for t.tests
+# A function to calculate cohen's d effect size for t.tests
 cohen.d<-function(M1,SD1,M2,SD2){
 	sPooled=sqrt(((SD1^2)+(SD2^2))/2)
 	es<-M1-M2/sPooled
 	return(es)
 }
 
-# interpolate ColNAs # col.na.approx(cbind(x,y,maxgap=interpThresh,na.rm=T))
+# A function to interpolate ColNAs # col.na.approx(cbind(x,y,maxgap=interpThresh,na.rm=T))
 col.na.approx<-function(data,maxgap=5,na.rm=T){
 	require(zoo)
 	for(colNum in 1:ncol(data)){
 		data[,colNum]<-na.approx(data[,colNum],...)
-		# print(colNum)
 	}
+	return(data)
 }
 
+# A function to convert pixels to degrees of visual angle
 pix2deg<-function(pixels,screenSize,screenResolution=c(1280,1024),distance=600,dpi=96){
 	require(aspace)
 	if(screenSize>0){
