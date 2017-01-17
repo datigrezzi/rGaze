@@ -1,9 +1,9 @@
 # function to plot error bars in barplots
 # from monkeysuncle.stanford.edu/?p=485
 
-maxN<-function(x,n){
-	return(sort(x)[(length(x)-n):length(x)])
-}
+shift<-function (x, shift) c(rep(NA, times=shift), x[1:(length(x)-shift)]) # takes only positive values!
+
+maxN<-function(x,n) return(sort(x)[(length(x)-n):length(x)])
 
 colorvec<-c('antiquewhite','cornflowerblue','darkolivegreen2','brown1')
 

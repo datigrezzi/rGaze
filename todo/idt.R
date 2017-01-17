@@ -1,0 +1,1 @@
+# idt<-function(data,variables=c('Timestamp','GazePointX','GazePointY'),threshold=velthresh,export.processed=T,export.dir=getwd(),sampling.rate=60){}

@@ -1,0 +1,23 @@
+Tool to draw AOIs and export coordinates file (python?)
+-----------------------------------------
+potential problems:
+• whatever creates NAs in the data, like KeyPress
+
+-----------------------------------------
+for image import and analysis:
+pixmap package at: 
+https://stat.ethz.ch/pipermail/r-help/2003-May/033818.html
+
+but before we'll need to convert the images, maybe using:
+imagemahick at:
+http://www.imagemagick.org/script/binary-releases.php?ImageMagick=ethh8ajk24hjnj7fpjir9pj405#macosx
+
+as for the ordinal label for the scatter points:
+after points and scatter or whatever, we can use:
+text(x,y,c(),pos=)
+pos:1=bottom, 2=left,3=top,4=right,and/or overlay
+
+------------------------------------------
+new ideas:
+multicore :)
+http://cran.r-project.org/web/packages/multicore/index.html
