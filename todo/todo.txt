@@ -1,0 +1,15 @@
+todo:
+
+ivt:
+1. change processed file export name to use input data name + '_processed.csv'
+2. add parameter to interpolate missing samples up to n samples and delete the rest to control for whatever creates NAs in the data, like KeyPresses
+3. test with higher sampling rates (TX300)
+4. add parameter to join close fixations/saccades
+
+fixations:
+1. change processed file export name to use input data name + '_fixations.csv'
+2. add variable to get trials/media from which to calculate time 0 (for growth curves)
+
+saccades:
+1. change processed file export name to use input data name + '_saccades.csv'
+2. add variable to get trials/media from which to calculate time 0 (for srts)

@@ -1,7 +1,7 @@
 Tool to draw AOIs and export coordinates file (python?)
 -----------------------------------------
 potential problems:
-• whatever creates NAs in the data, like KeyPress
+• ivt with multiple participants can theoretically create problems of extended saccade over different participants. add single or multiple participants parameter to avoid the problem
 
 -----------------------------------------
 for image import and analysis:

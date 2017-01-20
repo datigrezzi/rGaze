@@ -1,15 +1,15 @@
 # Basic functions for raw gaze data processing
 # Iyad Aldaqre
-# Updated 17.01.2017
+# Updated 18.01.2017
 
 # Function to run a velocity based threshold to filter raw gaze data into fixations and saccades; saving the output is optional
-ivt<-function(data,variables=c('Timestamp','GazePointX','GazePointY'),threshold=1.5,export.processed=F,export.dir=getwd(),sampling.rate=60){
+ivt<-function(data, variables = c('Timestamp', 'GazePointX', 'GazePointY'), threshold = 1.5, export.processed = F, export.dir = getwd(), sampling.rate = 60){
 	require(zoo,quietly=T)
 	velocity<-sqrt((diff(data[,variables[2]])^2)+(diff(data[,variables[3]])^2))/diff(data[,variables[1]]) # pixel/ms
 	# saccades
 	saccade_indices<-velocity>=threshold&diff(data[,variables[1]])<=ceiling(1000/sampling.rate)
 	saccade_indices[is.na(saccade_indices)]<-0
-	if(velocity[1]>=threshold){ # to categorize first sample
+	if(velocity[1]>=threshold & !is.na(velocity[1])){ # to categorize first sample
 		saccade_indices_diff<-c(1,diff(saccade_indices)) # to insure continuous data
 	} else {
 		saccade_indices_diff<-c(-1,diff(saccade_indices))
@@ -24,7 +24,7 @@ ivt<-function(data,variables=c('Timestamp','GazePointX','GazePointY'),threshold=
 	# fixations
 	fixation_indices<-velocity<=threshold&diff(data[,variables[1]])<=ceiling(1000/sampling.rate)
 	fixation_indices[is.na(fixation_indices)]<-0
-	if(velocity[1]<=threshold){
+	if(velocity[1]<=threshold & !is.na(velocity[1])){
 		fixation_indices_diff<-c(1,diff(fixation_indices)) # to insure continuous data
 	} else {
 		fixation_indices_diff<-c(-1,diff(fixation_indices))
@@ -49,7 +49,7 @@ ivt<-function(data,variables=c('Timestamp','GazePointX','GazePointY'),threshold=
 }
 
 # Function to group fixations processed by the ivt function above; saving the output is optional
-fixations<-function(data=processed_data,export.processed=F,export.dir=getwd(),variables=c('Timestamp','GazePointX','GazePointY','Fixations'),variablesToKeep=NULL){
+fixations<-function(data = processed_data, export.processed = F, export.dir = getwd(), variables = c('Timestamp', 'GazePointX', 'GazePointY', 'Fixations'), variablesToKeep = NULL){
 	data<-data[data[,variables[4]]!=0,]
 	row.names(data)<-1:nrow(data)
 
@@ -74,14 +74,14 @@ fixations<-function(data=processed_data,export.processed=F,export.dir=getwd(),va
 }
 
 # Function to group saccades processed by the ivt function above; saving the output is optional
-saccades<-function(data=processed_data,export.processed=F,export.dir=getwd(),variables=c('Timestamp','GazePointX','GazePointY','Saccades'),variablesToKeep=NULL){
+saccades<-function(data = processed_data, export.processed = F, export.dir = getwd(), variables = c('Timestamp', 'GazePointX', 'GazePointY', 'Saccades'), variablesToKeep = NULL){
 	data<-data[data[,variables[4]]!=0,]
 	row.names(data)<-1:nrow(data)
 	data$rows<-as.numeric(as.character(row.names(data)))
 	function_rows_min<-t(aggregate(data$rows,by=list(data[,variables[4]]),FUN=min)[2])
 	function_rows_max<-t(aggregate(data$rows,by=list(data[,variables[4]]),FUN=max)[2])
 
-	saccade_data<-cbind(aggregate(data[,variables[1]],by=list(data[,variables[4]]),FUN=min),(aggregate(data[,variables[1]],by=list(data[,variables[4]]),FUN=max)[2]-aggregate(data[,variables[1]],by=list(data[,variables[4]]),FUN=min)[2])+ceiling(1000/data$SamplingRate[1]),data[function_rows_min,variables[2]],data[function_rows_min,variables[3]],data[function_rows_max,variables[2]],data[function_rows_max,variables[3]])
+	saccade_data<-cbind(aggregate(data[,variables[1]],by=list(data[,variables[4]]),FUN=min),(aggregate(data[,variables[1]],by=list(data[,variables[4]]),FUN=max)[2]-aggregate(data[,variables[1]],by=list(data[,variables[4]]),FUN=min)[2])+ceiling(1000/data$SamplingRate[1]),data[function_rows_min,variables[2]],data[function_rows_min,variables[3]],data[function_rows_max+1,variables[2]],data[function_rows_max+1,variables[3]])
 	names(saccade_data)<-c('Saccade','Timestamp','Duration','GazePointX_Start','GazePointY_Start','GazePointX_End','GazePointY_End')
 	
 	if(!is.null(variablesToKeep)){
@@ -101,7 +101,7 @@ saccades<-function(data=processed_data,export.processed=F,export.dir=getwd(),var
 
 # Function to create an AOI variable to a data set, given the x and y coordinates. This function expects a dataframe with aoinames as column name,
 # a column for each aoi and x,x,y,y OR x,y,radius
-aois<-function(data,aoi_coordinates,variables=c('GazePointX','GazePointY'),aoiType='polygon'){ 
+aois<-function(data, aoi_coordinates, variables = c('GazePointX', 'GazePointY'), aoiType = 'polygon'){ 
 	require(sp,quietly=T)
 	AOI<-rep('out',nrow(data))
 	if(aoiType=='polygon'){
