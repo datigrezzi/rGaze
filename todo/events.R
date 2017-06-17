@@ -9,7 +9,7 @@
 # percentage progress bar
 # based on number of items in fileList and i
 ###########################################
-events<-function(fileList,dataDir,exportDir,variables=c('Timestamp','Event','Descriptor'),segmented=T,segment.keyword="",skip.keyword="",skip.ignore.case=T,video.ends.by.press=F,saveFile=T,dec = ".",...){
+events<-function(fileList,dataDir,exportDir,variables=c('Timestamp','Event','Descriptor'),segmented=T,segment.keyword="",skip.keyword="",skip.ignore.case=T,video.ends.by.press=F,saveFile=F,dec = ".",...){
 	curDir<-getwd()
 	if(is.element('allEvents',ls())){rm(allEvents)}
 	# setwd(dataDir)

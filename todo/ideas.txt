@@ -4,6 +4,10 @@ potential problems:
 • ivt with multiple participants can theoretically create problems of extended saccade over different participants. add single or multiple participants parameter to avoid the problem
 
 -----------------------------------------
+ideas for heatmaps:
+# script to ask for picture of stimulus (adjust dimensions?) and plot given x,y coordinates over the picture
+# either as heatmap (with colormap option) or as trail with variable diameter (taking into account fixation length)
+
 for image import and analysis:
 pixmap package at: 
 https://stat.ethz.ch/pipermail/r-help/2003-May/033818.html

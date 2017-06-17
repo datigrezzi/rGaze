@@ -1,8 +1,11 @@
 # Basic functions for raw gaze data processing
 # Iyad Aldaqre
-# Updated 18.01.2017
+# Updated 07.03.2017
 
-# Function to run a velocity based threshold to filter raw gaze data into fixations and saccades; saving the output is optional
+###########
+### IVT ###
+###########
+# Function to run a velocity based threshold to filter raw gaze data into fixations and saccades; saving the output is optional; This function expects data of a single participant
 ivt<-function(data, variables = c('Timestamp', 'GazePointX', 'GazePointY'), threshold = 1.5, export.processed = F, export.dir = getwd(), sampling.rate = 60){
 	require(zoo,quietly=T)
 	velocity<-sqrt((diff(data[,variables[2]])^2)+(diff(data[,variables[3]])^2))/diff(data[,variables[1]]) # pixel/ms
@@ -48,6 +51,9 @@ ivt<-function(data, variables = c('Timestamp', 'GazePointX', 'GazePointY'), thre
 		}
 }
 
+#################
+### FIXATIONS ###
+#################
 # Function to group fixations processed by the ivt function above; saving the output is optional
 fixations<-function(data = processed_data, export.processed = F, export.dir = getwd(), variables = c('Timestamp', 'GazePointX', 'GazePointY', 'Fixations'), variablesToKeep = NULL){
 	data<-data[data[,variables[4]]!=0,]
@@ -73,6 +79,9 @@ fixations<-function(data = processed_data, export.processed = F, export.dir = ge
 	}
 }
 
+################
+### SACCADES ###
+################
 # Function to group saccades processed by the ivt function above; saving the output is optional
 saccades<-function(data = processed_data, export.processed = F, export.dir = getwd(), variables = c('Timestamp', 'GazePointX', 'GazePointY', 'Saccades'), variablesToKeep = NULL){
 	data<-data[data[,variables[4]]!=0,]
@@ -99,8 +108,11 @@ saccades<-function(data = processed_data, export.processed = F, export.dir = get
 	}
 }
 
-# Function to create an AOI variable to a data set, given the x and y coordinates. This function expects a dataframe with aoinames as column name,
-# a column for each aoi and x,x,y,y OR x,y,radius
+############
+### AOIS ###
+############
+# Function to create an AOI variable to a data set, given the x and y coordinates.
+# This function expects a single-subject dataframe with aoinames as column name, a column for each aoi and x,x,y,y OR x,y,radius
 aois<-function(data, aoi_coordinates, variables = c('GazePointX', 'GazePointY'), aoiType = 'polygon'){ 
 	require(sp,quietly=T)
 	AOI<-rep('out',nrow(data))
@@ -113,4 +125,33 @@ aois<-function(data, aoi_coordinates, variables = c('GazePointX', 'GazePointY'),
 	}
 	data<-cbind(data,AOI)
 	return(data)
+}
+
+# Function to create a heatmap from x and y coordinates.
+# On macOS the heatmap is exported with a transparent background and therefore can be overlayed on the stimulus picture using an image processing software
+### debug
+n<-200
+color.levels<-20
+color.palette<-rf
+flip.y.axis<-T
+export.plot<-F
+size<-c(10.02,5.36)
+export.dir<-getwd()
+export.file.name<-'heatmap'
+data<-milanoData
+variables<-c('GazePointRightX..ADCSpx.','GazePointRightY..ADCSpx.')
+###
+
+heatmap <- function(data, variables = c('GazePointX', 'GazePointY'), n = 200, color.palette=rainbow, color.levels=20, flip.y.axis = T, export.plot = F, size=c(10.02,5.36), export.dir = getwd(), export.file.name='heatmap'){
+	require(zoo)
+	xCoordinates<-na.locf(data[,variables[1]], na.rm=T)
+	yCoordinates<-na.locf(data[,variables[2]], na.rm=T)
+	if(flip.y.axis){yCoordinates<-(yCoordinates*-1)+max(yCoordinates)}
+	# cat('Please wait while data is processed; this can take some time!')
+	heatmapData<-kde2d(xCoordinates,yCoordinates,n=n)
+	plot(xCoordinates,yCoordinates)
+	par(mai=c(0,0,0,0))
+	if(export.plot){pdf(paste(export.dir,'/', export.file.name,'.pdf',sep=''),width=size[1],height=size[2])}
+	filled.contour(heatmapData, axes=F, color.palette=color.palette, nlevels=color.levels, frame.plot = F, key.axes = F, asp = 0.5)
+	if(export.plot){dev.off()}
 }

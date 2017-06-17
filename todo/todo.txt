@@ -8,8 +8,10 @@ ivt:
 
 fixations:
 1. change processed file export name to use input data name + '_fixations.csv'
-2. add variable to get trials/media from which to calculate time 0 (for growth curves)
+2. reset row numbers
+3. add variable to get trials/media from which to calculate time 0 (for growth curves)
 
 saccades:
 1. change processed file export name to use input data name + '_saccades.csv'
-2. add variable to get trials/media from which to calculate time 0 (for srts)
+2. reset row numbers
+3. add variable to get trials/media from which to calculate time 0 (for srts)
