@@ -2,6 +2,9 @@
 # Iyad Aldaqre
 # 17.01.2017
 
+require(zoo)
+require(aspace)
+
 # A function to shift a vector by n
 shift<-function (x, shift){
 	c(rep(NA, times=shift), x[1:(length(x)-shift)]) # takes only positive values!
@@ -60,21 +63,24 @@ cohen.d<-function(M1,SD1,M2,SD2){
 
 # A function to interpolate ColNAs # col.na.approx(cbind(x,y,maxgap=interpThresh,na.rm=T))
 col.na.approx<-function(data,maxgap=5,na.rm=T){
-	require(zoo)
 	for(colNum in 1:ncol(data)){
 		data[,colNum]<-na.approx(data[,colNum],...)
 	}
 	return(data)
 }
 
-# A function to convert pixels to degrees of visual angle
-pix2deg<-function(pixels,screenSize,screenResolution=c(1280,1024),distance=600,dpi=96){
-	require(aspace)
-	if(screenSize>0){
-		# dpi: diagnoal pixels, as calculated by pythagorean theorem, divided by screen size in inches
-		dpi<-sqrt((screenResolution[1]^2)+(screenResolution[2]^2))/screenSize
-	}
+# A function to convert pixels into degrees of visual angle
+pix2deg<-function(pixels,screenSize=17,screenResolution=c(1280,1024),distance=600){
+	# dpi: diagnoal pixels, as calculated by pythagorean theorem, divided by screen size in inches
+	dpi<-sqrt((screenResolution[1]^2)+(screenResolution[2]^2))/screenSize
 	mm<-(pixels*25.4)/dpi
 	deg<-2*atan_d(mm/(2*distance))
 	return(deg)
+}
+
+# A function to convert degrees of visual angle into pixels
+deg2pix <- function(degrees, screenSize=22, screenResolution=c(1920, 1080), distance = 600){
+	# dpi: diagnoal pixels, as calculated by pythagorean theorem, divided by screen size in inches
+	dpi<-sqrt((screenResolution[1]^2)+(screenResolution[2]^2))/screenSize
+	
 }

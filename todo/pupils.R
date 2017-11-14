@@ -20,6 +20,8 @@ pupils<-function(data,variables=('recordingTimestamp','mediaName','pupilDiameter
 	
 }
 
+
+# add outlier rejection
 # output variables: raw average pupil, absolute difference form baseline, percent difference from baseline, pupil.segment absolute means and relative changes from baseline and definitely sems for each time point
 # media_var shuld be unique names of all media available; if media was repeated then name should be modified to be unique for each repetition, e.g. by pasting index number at the end
 # mediaIndex_var are the indices of media which we want to analyze pupil dilation for
