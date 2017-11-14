@@ -13,28 +13,22 @@ read.hdf5<-function(file, structurePreview=T){
 		print('source(\'http://bioconductor.org/biocLite.R\')')
 		print('biocLite(\'rhdf5\')')
 	}
-
 	# read file
-	gazeData<-h5read(file,'/data_collection/events/eyetracker/BinocularEyeSampleEvent')[,c('time','left_gaze_x','left_gaze_y','left_gaze_z','left_pupil_measure1','right_gaze_x','right_gaze_y','right_gaze_z','right_pupil_measure1','status')]
+	gazeData<-h5read(file,'/data_collection/events/eyetracker/BinocularEyeSampleEvent')[,c('time','left_gaze_x','left_gaze_y','left_eye_cam_z','left_pupil_measure1','right_gaze_x','right_gaze_y','right_eye_cam_z','right_pupil_measure1','status')]
 	eventData<-h5read(file,'/data_collection/events/experiment/MessageEvent')[,c('time','text')]
-	
 	# combine files using merge()
 	allData<-merge(gazeData, eventData, by='time', all=T)
 	# add event info using na.locf() then subset (check ost4?)
-	allData$text[1]<-'preStart'
+#	allData$text[1]<-'NA'
 	allData$text<-as.factor(allData$text)
 	allData$text<-na.locf(allData$text,fromLast=F,na.rm=F)
-	allData<-subset(allData,subset=is.na(allData$left_gaze_x)==F)
-	
+#	allData<-subset(allData,subset=is.na(allData$left_gaze_x)==F)
 	# add particiapnt name
 	allData$participant<-file
-
 	# preview file
 	if(structurePreview==T){print(h5ls(file))}
-
 	# return file
 	return(allData)
-	
 	# close hdf5 file
 	H5close()
 }
