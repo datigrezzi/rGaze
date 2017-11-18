@@ -2,7 +2,8 @@
 # Iyad Aldaqre
 # 17.01.2017
 
-require(zoo)
+# for 
+# require(zoo)
 require(aspace)
 
 # A function to shift a vector by n
@@ -70,7 +71,7 @@ col.na.approx<-function(data,maxgap=5,na.rm=T){
 }
 
 # A function to convert pixels into degrees of visual angle
-pix2deg<-function(pixels,screenSize=17,screenResolution=c(1280,1024),distance=600){
+pix2deg<-function(pixels,screenSize=22,screenResolution=c(1920,1080),distance=600){
 	# dpi: diagnoal pixels, as calculated by pythagorean theorem, divided by screen size in inches
 	dpi<-sqrt((screenResolution[1]^2)+(screenResolution[2]^2))/screenSize
 	mm<-(pixels*25.4)/dpi
@@ -81,6 +82,8 @@ pix2deg<-function(pixels,screenSize=17,screenResolution=c(1280,1024),distance=60
 # A function to convert degrees of visual angle into pixels
 deg2pix <- function(degrees, screenSize=22, screenResolution=c(1920, 1080), distance = 600){
 	# dpi: diagnoal pixels, as calculated by pythagorean theorem, divided by screen size in inches
-	dpi<-sqrt((screenResolution[1]^2)+(screenResolution[2]^2))/screenSize
-	
+	dpi <- sqrt((screenResolution[1]^2)+(screenResolution[2]^2))/screenSize # dot per inch
+	dpmm <- dpi / 25.4 # converted to mm
+	pix <- (2*distance*tan_d(degrees/2)) * dpmm
+	return(round(pix)) # because pixels ar integers!
 }
