@@ -6,17 +6,113 @@
 require(zoo,quietly = T)
 require(sp,quietly=T)
 
-###########################
-### Degrees into pixels ###
-###########################
-# a function to convert degrees of visual angle into pixels
+### Calculate Euclidean Distance Between Two Points ###
+eu.dist <- function(x1, y1, x2, y2){
+	return(sqrt(((x2-x1)^2)+((y2-y1)^2)))
+}
+
+# A function to shift a vector by "shift" elements
+shift<-function (x, by = 1){
+	if(by > 0){
+		shifted <- c(rep(NA, times=by), x[1:(length(x)-by)])
+	} else if(by < 0){
+		shifted <- c(x[(abs(by)+1):length(x)],rep(NA, times=abs(by)))
+	}
+	return(shifted)
+}
+
+#########################
+### Grouping Saccades ###
+#########################
+# function to group consecutive saccades into a single saccade if they are within max.dist radius (in pixels), max.delay apart. Soon a verification of whether they are going with the same trajectory will be added.
+
+groupSaccades <- function(saccades, max.dist = 50, max.delay = 30){	
+	# shift saccade start position and column-bind it to saccades data, to have next saccade start point on same row
+	saccades$NextSaccadeStartX <- shift(saccades$GazePointX_Start, by = -1)
+	saccades$NextSaccadeStartY <- shift(saccades$GazePointY_Start, -1)
+	saccades$dTime <- c(diff(saccades$Timestamp), 0) - saccades$Duration
+	saccades$sac_dist <- eu.dist(saccades$GazePointX_End, saccades$GazePointY_End, saccades$NextSaccadeStartX, saccades$NextSaccadeStartY)
+	
+	# dummy variable for saccades instead of looping [check]
+	grouped_indices <- saccades$sac_dist <= max.dist & saccades$dTime <= max.delay
+	grouped_indices[is.na(grouped_indices)] <- 0
+
+	# managing first saccade
+	if(grouped_indices[1] == 1){
+		grouped_indices_diff <- c(1, diff(grouped_indices))
+	} else{
+		grouped_indices_diff <- c(0, diff(grouped_indices))
+	}
+	
+	# indexing remaining separate saccades
+	grouped_saccades <- rep(NA, nrow(saccades))
+	grouped_saccades[grouped_indices_diff == 1 | (grouped_indices_diff != -1 & grouped_indices == 0)] <- 1
+	# giving them a new saccade number as we will have less saccades after grouping
+	grouped_saccades_count <- seq(1:length(grouped_saccades[!is.na(grouped_saccades)]))
+	grouped_saccades[!is.na(grouped_saccades)] <- grouped_saccades_count
+	# add new saccades numbers to saccades dataset
+	saccades$grouped<-na.locf(grouped_saccades,fromLast=F,na.rm=F)
+	
+	# do the actual grouping, creating new dataset	
+	grouped_saccades <- cbind(aggregate(saccades$Timestamp,by=list(saccades$grouped),FUN=min), ((aggregate(saccades$Timestamp,by=list(saccades$grouped),FUN=max)[2] + saccades$Duration[is.element(saccades$Timestamp,tapply(saccades$Timestamp, INDEX = saccades$grouped, FUN=max))])-aggregate(saccades$Timestamp,by=list(saccades$grouped),FUN=min)[2]), saccades$GazePointX_Start[is.element(saccades$Timestamp, tapply(saccades$Timestamp, INDEX = saccades$grouped, FUN = min))], saccades$GazePointY_Start[is.element(saccades$Timestamp, tapply(saccades$Timestamp, INDEX = saccades$grouped, FUN = min))],saccades$GazePointX_End[is.element(saccades$Timestamp, tapply(saccades$Timestamp, INDEX = saccades$grouped, FUN = max))],saccades$GazePointY_End[is.element(saccades$Timestamp, tapply(saccades$Timestamp, INDEX = saccades$grouped, FUN = max))])
+	
+	# rename variables
+	names(grouped_saccades)<-c('Saccade','Timestamp','Duration','GazePointX_Start','GazePointY_Start','GazePointX_End','GazePointY_End')
+
+	# return new dataset
+	return(grouped_saccades)
+}
+
+##########################
+### Grouping Fixations ###
+##########################
+# function to group consecutive fixations into a single fixation if they are within max.dist radius (in pixels) and max.delay apart
+
+groupFixations <- function(fixations, max.dist = 50, max.delay = 75){
+	# shift saccade start position and column-bind it to fixations data, to have next saccade start point on same row
+	fixations$NextFixationX <- shift(fixations$GazePointX, by = -1)
+	fixations$NextFixationY <- shift(fixations$GazePointY, -1)
+	fixations$dTime <- c(diff(fixations$Timestamp), 0) - fixations$Duration
+	fixations$fix_dist <- eu.dist(fixations$GazePointX, fixations$GazePointY, fixations$NextFixationX, fixations$NextFixationY)
+	
+	# dummy variable for fixations instead of looping [check]
+	grouped_indices <- fixations$fix_dist <= max.dist & fixations$dTime <= max.delay
+	grouped_indices[is.na(grouped_indices)] <- 0
+
+	# managing first saccade
+	if(grouped_indices[1] == 1){
+		grouped_indices_diff <- c(1, diff(grouped_indices))
+	} else{
+		grouped_indices_diff <- c(0, diff(grouped_indices))
+	}
+	
+	# indexing remaining separate fixations
+	grouped_fixations <- rep(NA, nrow(fixations))
+	grouped_fixations[grouped_indices_diff == 1 | (grouped_indices_diff != -1 & grouped_indices == 0)] <- 1
+	# giving them a new saccade number as we will have less fixations after grouping
+	grouped_fixations_count <- seq(1:length(grouped_fixations[!is.na(grouped_fixations)]))
+	grouped_fixations[!is.na(grouped_fixations)] <- grouped_fixations_count
+	# add new fixations numbers to fixations dataset
+	fixations$grouped<-na.locf(grouped_fixations,fromLast=F,na.rm=F)
+	
+	# do the actual grouping, creating new dataset	
+	grouped_fixations <- cbind(aggregate(fixations$Timestamp,by=list(fixations$grouped),FUN=min), aggregate(fixations$GazePointX,by=list(fixations$grouped),FUN=mean)[2], aggregate(fixations$GazePointY,by=list(fixations$grouped),FUN=mean)[2], ((aggregate(fixations$Timestamp,by=list(fixations$grouped),FUN=max)[2] + fixations$Duration[is.element(fixations$Timestamp,tapply(fixations$Timestamp, INDEX = fixations$grouped, FUN=max))])-aggregate(fixations$Timestamp,by=list(fixations$grouped),FUN=min)[2]))
+	
+	# rename variables
+	names(grouped_fixations)<-c('Fixation','Timestamp','GazePointX','GazePointY','Duration')
+
+	# return new dataset
+	return(grouped_fixations)
+}
 
 ###########
 ### IVT ###
 ###########
 # Function to run a velocity based threshold to filter raw gaze data into fixations and saccades
-# This function expects data of a single participant
-ivt<-function(data, variables = c('Timestamp', 'GazePointX', 'GazePointY'), threshold = 1.5, output = 'saccades', export.dir = getwd(), samplingRate = 'auto', variablesToKeep = NULL){
+# This function expects data of a single participant. Threshold is in pixels per timestamp unit (probably millisecond, depending on data collection software)
+# Threshold in degrees can be estimated before hand for each participant and then converted to pixels and passed to this function (see deg2pix)
+
+ivt<-function(data, variables = c('Timestamp', 'GazePointX', 'GazePointY'), threshold = 1.5, output = 'saccades', samplingRate = 'auto', variablesToKeep = NULL, groupConsecutive = FALSE, max.dist = 50, max.delay = 50){
 
 	velocity <- sqrt((diff(data[,variables[2]])^2) + (diff(data[,variables[3]])^2)) / diff(data[,variables[1]]) # pixel/ms
 	
@@ -32,6 +128,7 @@ ivt<-function(data, variables = c('Timestamp', 'GazePointX', 'GazePointY'), thre
 
 	# saccades
 	else if(output == 'saccades'){
+		# following condition only takes consecutive samples; can change here to tolerate missing samples by increasing the last part into multiples of sample duration
 		saccade_indices <- velocity >= threshold & diff(data[,variables[1]]) <= ceiling(1000/samplingRate)
 		saccade_indices[is.na(saccade_indices)] <- 0
 		if(velocity[1] >= threshold & !is.na(velocity[1])){ # to categorize first sample
@@ -53,11 +150,16 @@ ivt<-function(data, variables = c('Timestamp', 'GazePointX', 'GazePointY'), thre
 		function_rows_min<-t(aggregate(data$rows,by=list(data$Saccades),FUN=min)[2])
 		function_rows_max<-t(aggregate(data$rows,by=list(data$Saccades),FUN=max)[2])
 
-		saccade_data<-cbind(aggregate(data[,variables[1]],by=list(data$Saccades),FUN=min),(aggregate(data[,variables[1]],by=list(data$Saccades),FUN=max)[2]-aggregate(data[,variables[1]],by=list(data$Saccades),FUN=min)[2])+ceiling(1000/samplingRate),data[function_rows_min,variables[2]],data[function_rows_min,variables[3]],data[function_rows_max+1,variables[2]],data[function_rows_max+1,variables[3]])
+		saccade_data<-cbind(aggregate(data[,variables[1]],by=list(data$Saccades),FUN=min), (aggregate(data[,variables[1]],by=list(data$Saccades),FUN=max)[2]-aggregate(data[,variables[1]],by=list(data$Saccades),FUN=min)[2])+ceiling(1000/samplingRate), data[function_rows_min,variables[2]],data[function_rows_min,variables[3]],data[function_rows_max,variables[2]],data[function_rows_max,variables[3]])
+		
 		names(saccade_data)<-c('Saccade','Timestamp','Duration','GazePointX_Start','GazePointY_Start','GazePointX_End','GazePointY_End')
 		
+		if(groupConsecutive){
+			saccade_data <- groupSaccades(saccade_data, max.dist = max.dist, max.delay = max.delay)
+		}
+		
 		if(!is.null(variablesToKeep)){
-			other_variables<-data[function_rows_min,variablesToKeep]
+			other_variables<-data[is.element(data[,variables[1]], saccade_data$Timestamp),variablesToKeep]
 			saccade_data<-cbind(saccade_data,other_variables)
 		}
 		
@@ -84,17 +186,23 @@ ivt<-function(data, variables = c('Timestamp', 'GazePointX', 'GazePointY'), thre
 		row.names(data)<-1:nrow(data)
 
 		fixation_data<-cbind(aggregate(data[,variables[2]],by=list(data$Fixations),FUN=mean),aggregate(data[,variables[3]],by=list(data$Fixations),FUN=mean)[,2],aggregate(data[,variables[1]],by=list(data$Fixations),FUN=min)[,2],(aggregate(data[,variables[1]],by=list(data$Fixations),FUN=max)[2]-aggregate(data[,variables[1]],by=list(data$Fixations),FUN=min)[,2])+ceiling(1000/samplingRate))
+	
 		names(fixation_data)<-c('Fixation','GazePointX','GazePointY','Timestamp','Duration')
 	
+		if(groupConsecutive){
+			fixation_data <- groupFixations(fixation_data, max.dist = max.dist, max.delay = max.delay)
+		}
+	
 		if(!is.null(variablesToKeep)){
-			data$rows<-as.numeric(as.character(row.names(data)))
-			fixation_rows<-t(aggregate(data$rows,by=list(data$Fixations),FUN=min)[2])
-			other_variables<-data[fixation_rows,variablesToKeep]
+			other_variables<-data[is.element(data[,variables[1]], fixation_data$Timestamp),variablesToKeep]
 			fixation_data<-cbind(fixation_data,other_variables)
 		}
-		
+			
 		print('Fixations identified!')
 		return(fixation_data)
+	}
+	else{
+		warning("Please choose valid output (fixations, saccades or velocities)")
 	}
 
 }
@@ -116,6 +224,19 @@ aois<-function(data, aoi_coordinates, variables = c('GazePointX', 'GazePointY'),
 	# data<-cbind(data,AOI)
 	return(AOI)
 }
+
+#############################
+### Proportion of looking ###
+#############################
+# function to calculate proportion of looking at each aoi and its dynamic changes over a period of time.
+# data is binned and proportions are calculated for each bin for a single participant. Should be ready to plot.
+# afterwards, data from all participants can be concatenated to plot means for bins with error bars (see error.line)
+
+######################
+### Pupil Dilation ###
+######################
+# Function to process pupil data, subtracting baseline as an option and preparing for plot by binning data (even at sampling rate).
+# afterwards, data from all participants can be concatenated to plot means for bins with error bars (see error.line)
 
 ###############
 ### Heatmap ###

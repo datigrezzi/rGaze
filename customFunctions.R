@@ -6,11 +6,6 @@
 # require(zoo)
 require(aspace)
 
-# A function to shift a vector by n
-shift<-function (x, shift){
-	c(rep(NA, times=shift), x[1:(length(x)-shift)]) # takes only positive values!
-}
-
 # A function to get the maximum n values (instead of just the single maximum value)
 maxN<-function(x,n){
 	return(sort(x)[(length(x)-n):length(x)])
