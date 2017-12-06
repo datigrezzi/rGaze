@@ -15,7 +15,7 @@ read.tobii.glasses <- function(file, normalized = FALSE){
 	syncInData <- NULL
 	
 	for(i in glassesJSON){
-		if(grepl('vts', i)){
+		if(grepl('vts', i) & !grepl('evts', i)){
 			videoTime <- rbind(videoTime, t(unlist(fromJSON(i))))
 		} else if(grepl('gp',i) & !grepl('gp3', i)){
 			gazeData<-rbind(gazeData,t(unlist(fromJSON(i))))
