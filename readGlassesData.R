@@ -33,19 +33,17 @@ read.tobii.glasses <- function(file, normalized = FALSE){
 	}
 	
 	### VIDEO AND GAZE
-	gazeData <- merge(as.data.frame(videoTime[,c(1,3)]), as.data.frame(gazeData[,-5]), by="ts", all=T)
+	gazeData <- merge(as.data.frame(videoTime[,c(1,3)]), as.data.frame(gazeData[,-4]), by="ts", all=T)
+	names(gazeData)[5:6] <- c("gpx", "gpy")
 	### PUPIL
 	pupilData<-as.data.frame(pupilData,row.names = as.character(seq(1,nrow(pupilData),1)), stringsAsFactors = F)
-	pupilData <- aggregate(data = pupilData, as.numeric(pd)~as.numeric(ts), FUN = mean, na.rm=T)
+	pupilData <- aggregate(data = pupilData, as.numeric(pd)~as.numeric(ts), FUN = mean, na.rm=T) #using mean for both pupils
 	names(pupilData) <- c("ts","pd")
 	gazeData <- merge(gazeData, pupilData, by="ts", all=T)
-	print(head(gazeData))
 	### GYRO 
 	gyroData <- merge(as.data.frame(videoTime[,c(1,3)]), as.data.frame(gyroData), by="ts", all=T)
-	print(head(gyroData))
 	### ACCELEROMETER
 	accelerometerData <- merge(videoTime[,c(1,3)], as.data.frame(accelerometerData[,-2]), by="ts", all=T)
-	print(head(accelerometerData))
 	### SYNC OUT
 	syncOutData<-data.frame(syncOutData,row.names = as.character(seq(1,nrow(syncOutData),1)), stringsAsFactors=F)
 	syncOutData$ts <- as.numeric(syncOutData$ts)
@@ -62,7 +60,6 @@ read.tobii.glasses <- function(file, normalized = FALSE){
 	syncInData$sig <- as.numeric(syncInData$sig)
 	syncData <- merge(syncOutData[,-3], syncInData, by="ts", all=T)
 	names(syncData)[3:4]<-c('sync.out','sync.in')
-	print(head(syncData))
 
 	return(list("gaze" = gazeData, "gyro" = gyroData, "accelerometer" = accelerometerData, "sync" = syncData))
 }
