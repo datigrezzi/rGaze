@@ -1,8 +1,8 @@
 # A funciton to parse Tobii Glasses 2 JSON data and output a more familiar dataframe
-library(reshape2)
-library(rjson)
 
 read.tobii.glasses <- function(file, normalized = FALSE){
+	require(reshape2)
+	require(rjson)
 	
 	glassesJSON<-readLines(file)
 	
@@ -37,8 +37,10 @@ read.tobii.glasses <- function(file, normalized = FALSE){
 	names(gazeData)[5:6] <- c("gpx", "gpy")
 	### PUPIL
 	pupilData<-as.data.frame(pupilData,row.names = as.character(seq(1,nrow(pupilData),1)), stringsAsFactors = F)
-	pupilData <- aggregate(data = pupilData, as.numeric(pd)~as.numeric(ts), FUN = mean, na.rm=T) #using mean for both pupils
-	names(pupilData) <- c("ts","pd")
+	pupilData$pd <- as.numeric(pupilData$pd)
+	pupilData <- recast(pupilData, ts ~ eye, id.var=c("ts","eye"), measure.var="pd", mean)
+	names(pupilData) <- c("ts","pdl","pdr")
+	print(head(pupilData))
 	gazeData <- merge(gazeData, pupilData, by="ts", all=T)
 	### GYRO 
 	gyroData <- merge(as.data.frame(videoTime[,c(1,3)]), as.data.frame(gyroData), by="ts", all=T)
