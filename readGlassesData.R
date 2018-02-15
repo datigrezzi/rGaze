@@ -4,6 +4,17 @@ read.tobii.glasses <- function(file, normalized = FALSE){
 	require(reshape2)
 	require(rjson)
 	
+	listJS2df <- function(list_of_JSON){
+		if(length(list_of_JSON) > 0){
+			tmp <- lapply(lapply(list_of_JSON, FUN=fromJSON), FUN=unlist)
+			dfOut <- as.data.frame(matrix(unlist(tmp), byrow=T, nrow=length(tmp)), stringsAsFactors = F)
+			names(dfOut) <- names(fromJSON(list_of_JSON[1]))
+			return(dfOut)
+		} else{
+			return(NULL)
+		}
+	}
+	
 	glassesJSON<-readLines(file)
 	
 	videoTime <- NULL
@@ -14,36 +25,42 @@ read.tobii.glasses <- function(file, normalized = FALSE){
 	syncOutData <- NULL
 	syncInData <- NULL
 	
-	for(i in glassesJSON){
-		if(grepl('vts', i) & !grepl('evts', i)){
-			videoTime <- rbind(videoTime, t(unlist(fromJSON(i))))
-		} else if(grepl('gp',i) & !grepl('gp3', i)){
-			gazeData<-rbind(gazeData,t(unlist(fromJSON(i))))
-		} else if(grepl('pd',i)){
-			pupilData<-rbind(pupilData,t(unlist(fromJSON(i))))
-		} else if(grepl('gy',i)){
-			gyroData<-rbind(gyroData,t(unlist(fromJSON(i))))
-		} else if(grepl('ac',i)){
-			accelerometerData<-rbind(accelerometerData,t(unlist(fromJSON(i))))
-		} else if(grepl('sig',i) & grepl('out', i)){
-			syncOutData<-rbind(syncOutData,t(unlist(fromJSON(i))))
-		} else if(grepl('sig',i) & grepl('in', i)){
-			syncInData<-rbind(syncInData,t(unlist(fromJSON(i))))
-		}
-	}
+	# extract video time data
+	tmp <- glassesJSON[grepl('vts', glassesJSON) & !grepl('evts', glassesJSON)]
+	videoTime <-listJS2df(tmp)[,c(1,3)]
+
+	# extract gaze data
+	tmp <- glassesJSON[grepl('gp', glassesJSON) & !grepl('gp3', glassesJSON)]
+	gazeData <- listJS2df(tmp)[,-4]
+
+	# extract pupil data
+	tmp <- glassesJSON[grepl('pd',glassesJSON)]
+	pupilData <- listJS2df(tmp)
+	
+	# extract gyroscope data
+	tmp <- glassesJSON[grepl('gy', glassesJSON)]
+	gyroData <- listJS2df(tmp)
+
+	# extract accelerometer data
+	tmp <- glassesJSON[grepl('ac', glassesJSON)]
+	accelerometerData <- listJS2df(tmp)[,-2]
+	# extract sync out data
+	tmp <- glassesJSON[grepl('sig', glassesJSON) & grepl('out', glassesJSON)]
+	syncOutData <- listJS2df(tmp)
+	
+	# extract sync in data
+	tmp <- glassesJSON[grepl('sig', glassesJSON) & grepl('in', glassesJSON)]
+	syncInData <- listJS2df(tmp)
 	
 	### Prepare video time
-	videoTime <- as.data.frame(videoTime[,c(1,3)], stringsAsFactors = F)
 	videoTime$ts <- as.numeric(videoTime$ts)
 
 	### VIDEO AND GAZE
-	gazeData <- as.data.frame(gazeData[,-4], stringsAsFactors = F)
 	gazeData$ts <- as.numeric(gazeData$ts)
 	gazeData <- merge(videoTime, gazeData, by="ts", all=T)
 	names(gazeData)[5:6] <- c("gpx", "gpy")
 
 	### PUPIL
-	pupilData<-as.data.frame(pupilData,row.names = as.character(seq(1,nrow(pupilData),1)), stringsAsFactors = F)
 	pupilData$pd <- as.numeric(pupilData$pd)
 	pupilData$ts <- as.numeric(pupilData$ts)
 	pupilData <- recast(pupilData, ts ~ eye, id.var=c("ts","eye"), measure.var="pd", mean)
@@ -52,22 +69,18 @@ read.tobii.glasses <- function(file, normalized = FALSE){
 	gazeData <- merge(gazeData, pupilData, by="ts", all=T)
 
 	### GYRO
-	gyroData <- as.data.frame(gyroData, stringsAsFactors = F)
 	gyroData$ts <- as.numeric(gyroData$ts)
 	gyroData <- merge(videoTime, gyroData, by="ts", all=T)
 
 	### ACCELEROMETER
-	accelerometerData <- as.data.frame(accelerometerData[,-2], stringsAsFactors = F)
 	accelerometerData$ts <- as.numeric(accelerometerData$ts)
 	accelerometerData <- merge(videoTime, accelerometerData, by="ts", all=T)
 
 	### SYNC OUT
-	syncOutData<-data.frame(syncOutData,row.names = as.character(seq(1,nrow(syncOutData),1)), stringsAsFactors=F)
 	syncOutData$ts <- as.numeric(syncOutData$ts)
 	syncOutData$sig <- as.numeric(syncOutData$sig)
 	### SYNC IN
 	if(!is.null(syncInData)){
-		syncInData<-data.frame(syncInData,row.names = as.character(seq(1,nrow(syncInData),1)), stringsAsFactors=F)
 		syncInData <- syncInData[,c(1,4)]
 	} else {
 		syncInData <- as.data.frame(cbind(syncOutData$ts, rep(0, nrow(syncOutData))), stringsAsFactors=F)
