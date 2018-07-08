@@ -82,3 +82,19 @@ deg2pix <- function(degrees, screenSize=22, screenResolution=c(1920, 1080), dist
 	pix <- (2*distance*tan_d(degrees/2)) * dpmm
 	return(round(pix)) # because pixels ar integers!
 }
+
+deg2pix2 <- function(degrees, dotPerMm, distance = 600){
+	pix <- (2*distance*tan_d(degrees/2)) * dotPerMm
+	return(round(pix)) # because pixels ar integers!
+}
+
+# A function to convert mm to degrees of visual angle
+mm2deg <- function(mm, distance){
+	deg <- 2*atan_d(mm/(2*distance))
+	return(deg)
+}
+
+deg2mm <- function(deg, distance){
+	mm <- 2*distance*tan_d(deg/2)
+	return(mm)
+}
