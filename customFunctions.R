@@ -6,6 +6,20 @@
 # require(zoo)
 require(aspace)
 
+# function to return index of all values that are above or below N Standard Deviations from the mean
+stdOutlierIdx <- function(x, nSD = 3, na.rm=T){
+  idx <- rep(FALSE, length(x))
+  idx[x < (mean(x, na.rm=na.rm) - (sd(x, na.rm=na.rm) * nSD)) | x > (mean(x, na.rm=na.rm) + (sd(x, na.rm=na.rm) * nSD))] <- TRUE
+  return(idx)
+}
+# function to return the index of all values that are above or below a static threshold
+threshOutlierIdx <- function(x, min=0, max=6){
+  idx <- rep(FALSE, length(x))
+  idx[x < min | x > max] <- TRUE
+  return(idx)
+}
+
+
 # A function to get the maximum n values (instead of just the single maximum value)
 maxN<-function(x,n){
 	return(sort(x)[(length(x)-n):length(x)])
