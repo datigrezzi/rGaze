@@ -112,13 +112,16 @@ groupFixations <- function(fixations, max.dist = 50, max.delay = 75){
 # This function expects data of a single participant. Threshold is in pixels per timestamp unit (probably millisecond, depending on data collection software)
 # Threshold in degrees can be estimated before hand for each participant and then converted to pixels and passed to this function (see deg2pix)
 
-ivt<-function(data, variables = c('Timestamp', 'GazePointX', 'GazePointY'), threshold = 1.5, output = 'saccades', samplingRate = 'auto', variablesToKeep = NULL, groupConsecutive = FALSE, max.dist = 50, max.delay = 50){
+ivt<-function(data, variables = c('Timestamp', 'GazePointX', 'GazePointY'), threshold = 1.5, output = 'saccades', samplingRate = 'auto', variablesToKeep = NULL, groupConsecutive = FALSE, max.dist = 50, max.delay = 50, minFixDuration = NA, verbose = FALSE){
 
 	velocity <- sqrt((diff(data[,variables[2]])^2) + (diff(data[,variables[3]])^2)) / diff(data[,variables[1]]) # pixel/ms
 	
 	if(samplingRate == 'auto'){
-		samplingRate = round(1000/mean(diff(data[,variables[1]])))
-		print(paste("Sampling rate detected:", samplingRate))
+		samplingRate = round(1000/mean(diff(data[,variables[1]]), na.rm = T))
+		if(verbose){
+		  print(paste("Sampling rate detected:", samplingRate))
+		}
+
 	}
 	
 	if(output == 'velocities'){
@@ -162,8 +165,9 @@ ivt<-function(data, variables = c('Timestamp', 'GazePointX', 'GazePointY'), thre
 			other_variables<-data[is.element(data[,variables[1]], saccade_data$Timestamp),variablesToKeep]
 			saccade_data<-cbind(saccade_data,other_variables)
 		}
-		
-		print('Saccades identified!')
+		if(verbose){
+		  print('Saccades identified!')
+		}
 		return(saccade_data)
 	}
 	else if(output == 'fixations'){
@@ -197,8 +201,14 @@ ivt<-function(data, variables = c('Timestamp', 'GazePointX', 'GazePointY'), thre
 			other_variables<-data[is.element(data[,variables[1]], fixation_data$Timestamp),variablesToKeep]
 			fixation_data<-cbind(fixation_data,other_variables)
 		}
-			
-		print('Fixations identified!')
+		if(verbose){
+		  print('Fixations identified!')
+		}
+		if(!is.na(minFixDuration)){
+		  fixation_data <- fixation_data[fixation_data$Duration >= minFixDuration,]
+		  fixation_data$Fixation <- seq(1, nrow(fixation_data))
+		  row.names(fixation_data) <- seq(1, nrow(fixation_data))
+		}
 		return(fixation_data)
 	}
 	else{
@@ -259,6 +269,7 @@ aois<-function(data, aoi_coordinates, variables = c('GazePointX', 'GazePointY'),
 
 
 heatmap <- function(data, variables = c('GazePointX', 'GazePointY'), n = 200, color.palette=rainbow, color.levels=20, flip.y.axis = T, export.plot = F, size=c(10.02,5.36), export.dir = getwd(), export.file.name='heatmap'){
+  require('MASS')
 	xCoordinates<-na.locf(data[,variables[1]], na.rm=T)
 	yCoordinates<-na.locf(data[,variables[2]], na.rm=T)
 	if(flip.y.axis){yCoordinates<-(yCoordinates*-1)+max(yCoordinates)}
@@ -271,4 +282,13 @@ heatmap <- function(data, variables = c('GazePointX', 'GazePointY'), n = 200, co
 	if(export.plot){dev.off()}
 }
 
-# heatmap2 <- function(){}
+heatmap2 <- function(data, variables = c('GazePointX', 'GazePointY'), n = 200, color.palette=rainbow, color.levels=20, flip.y.axis = T, export.plot = F, size=c(10.02,5.36), export.dir = getwd(), export.file.name='heatmap', ylims = c(1024, 0), xlims = c(0, 1280)){
+  require('MASS')
+  xCoordinates<-na.approx(data[,variables[1]], na.rm=T)
+  yCoordinates<-na.approx(data[,variables[2]], na.rm=T)
+  heatmapData<-kde2d(xCoordinates,yCoordinates,n=n)
+  par(mai=c(0,0,0,0))
+  filled.contour(heatmapData, axes=F, color.palette=color.palette, nlevels=color.levels, frame.plot = F, key.axes = F, asp = 0.5, ylim = ylims, xlim = xlims)
+}
+
+# TODO: add clustering; check https://www.rdocumentation.org/packages/spatialEco/versions/1.1-1/topics/nni
